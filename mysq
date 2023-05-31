@@ -1,0 +1,80 @@
+<?php
+// Database connection details
+$servername = "localhost";
+$username = "your_username";
+$password = "your_password";
+$dbname = "your_database_name";
+
+// Create a connection
+$conn = mysqli_connect($servername, $username, $password, $dbname);
+
+// Check the connection
+if (!$conn) {
+    die("Connection failed: " . mysqli_connect_error());
+}
+
+// Initialize variables
+$student_id = $subject = $marks = "";
+$error = "";
+
+// Check if the form is submitted
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Retrieve and sanitize the form data
+    $student_id = sanitize_input($_POST['student_id']);
+    $subject = sanitize_input($_POST['subject']);
+    $marks = sanitize_input($_POST['marks']);
+
+    // Perform validation
+    if (empty($student_id) || empty($subject) || empty($marks)) {
+        $error = "All fields are required!";
+    } elseif (!is_numeric($marks)) {
+        $error = "Marks must be a number!";
+    } else {
+        // Insert marks into the database
+        $sql = "INSERT INTO student_marks (student_id, subject, marks) VALUES ('$student_id', '$subject', '$marks')";
+        if (mysqli_query($conn, $sql)) {
+            echo "Marks added successfully!";
+            // Clear form data after successful submission
+            $student_id = $subject = $marks = "";
+        } else {
+            echo "Error: " . $sql . "<br>" . mysqli_error($conn);
+        }
+    }
+}
+
+// Function to sanitize form input
+function sanitize_input($data) {
+    $data = trim($data);
+    $data = stripslashes($data);
+    $data = htmlspecialchars($data);
+    return $data;
+}
+
+// Close the database connection
+mysqli_close($conn);
+?>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Mark Maintenance</title>
+</head>
+<body>
+    <h2>Student Mark Maintenance</h2>
+    <?php if (!empty($error)) { ?>
+        <p style="color: red;"><?php echo $error; ?></p>
+    <?php } ?>
+    <form method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>">
+        <label for="student_id">Student ID:</label>
+        <input type="text" name="student_id" value="<?php echo $student_id; ?>" required><br><br>
+        
+        <label for="subject">Subject:</label>
+        <input type="text" name="subject" value="<?php echo $subject; ?>" required><br><br>
+        
+        <label for="marks">Marks:</label>
+        <input type="text" name="marks" value="<?php echo $marks; ?>" required><br><br>
+        
+        <input type="submit" value="Add Marks">
+    </form>
+</body>
+</html>
